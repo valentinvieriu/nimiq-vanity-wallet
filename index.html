@@ -2,7 +2,6 @@
   <head>
     <title>Nimiq Offline Wallet</title>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
-    <script src="/src/NimiqRenderer.js"></script>
   </head>
   <body>
     <div>
@@ -13,75 +12,60 @@
           id="wallet_pattern"
           name="name"
           placeholder="^NQ[0-9][0-9]"
-          value="^NQ[0-9][0-9] BE"
+          value="^NQ[0-9][0-9] BEER"
         />
         <label for="cpu_count">CPU count</label>
         <input id="cpu_count" type="number" min="1" />
       </span>
       <span>
-        <button id="generateWallet" onclick="generateWallet()">
+        <button id="generateWallet" onclick="OfflineWallet.generateWallet()">
           Generate Wallet
         </button>
-        <button id="stop" onclick="stopGenerateWallet()">Stop</button>
+        <button id="stop" onclick="OfflineWallet.stopSearch()">Stop</button>
       </span>
     </div>
-    <div>
-      Counter: <span id="counter">0</span> - Time <span id="timer">0.00</span>
-    </div>
-    <div id="qrcodes"></div>
+    <div id="wallets"></div>
 
-    <script>
-      const wasm_uri = `/dist/worker-wasm.wasm`;
-      const worker_uri = `/src/NimiqWebWorker.js`;
+    <script type="module">
+      import { default as Iqons, makeHash, IqonsAssets } from "./dist/iqons.bundle.min.js";
+      import WalletGenerator from './src/WalletGenerator.js';
+      const wasmUrl = `/dist/worker-wasm.wasm`;
+      const workerUrl = `/src/WebWorker.js`;
 
-      const target_dom_element = document.getElementById('qrcodes');
-      const timer_dom_element = document.getElementById('timer');
-      const qrcodes_element = document.getElementById('wallet_pattern');
-      const counter_dom_element = document.getElementById('counter');
-      const cpu_count_dom_element = document.getElementById('cpu_count');
-      cpu_count_dom_element.max = navigator.hardwareConcurrency || 1;
-      cpu_count_dom_element.value = navigator.hardwareConcurrency;
-      let cpu_count = Number(cpu_count_dom_element.value);
-      const renderer = new NimiqRenderer(worker_uri, wasm_uri, cpu_count);
-
-      function stopGenerateWallet() {
-        renderer.stopRender();
+      const target_dom_element = document.getElementById('wallets');
+      const $walletPattern = document.getElementById('wallet_pattern');
+      const $cpuCount = document.getElementById('cpu_count');
+      $cpuCount.max = navigator.hardwareConcurrency || 1;
+      $cpuCount.value = navigator.hardwareConcurrency;
+      let cpuCount = Number($cpuCount.value);
+      WalletGenerator.init({ workerUrl, wasmUrl, cpuCount });
+      function stopSearch() {
+        WalletGenerator.stopSearch();
       }
       function generateWallet() {
-        // target_dom_element.textContent = '';
-        timer_dom_element.textContent = '0:00';
-        counter_dom_element.textContent = '0';
-
-        // prepare data set
-        let wallet_pattern = qrcodes_element.value || '^NQ[0-9][0-9] BE';
-        let counter = 0;
-
-        // run test
-        let svg_end_time;
-        let svg_start_time = Date.now();
-
-        renderer
-          .render(wallet_pattern,cpu_count)
-          .then(({ wallet, mnemonicPrivateKeyLegacy }) => {
+        let searchPattern = $walletPattern.value || '^NQ[0-9][0-9] BE';
+        WalletGenerator
+          .search({searchPattern})
+          .then(async ({ wallet, mnemonicPrivateKeyLegacy }) => {
+            const svgIcon = await Iqons.svg(wallet);
             target_dom_element.insertAdjacentHTML(
               `beforeend`,
               ` <pre>${wallet}</pre>
                 <pre>${mnemonicPrivateKeyLegacy}</pre>
+                ${svgIcon}
               `
             );
-            counter += 1;
-            counter_dom_element.innerHTML = counter;
-            total_svg_time = (Date.now() - svg_start_time) / 1000.0;
-            timer_dom_element.innerHTML = `${total_svg_time}`;
           })
           .catch(error => alert(error));
-
-        }
-        cpu_count_dom_element.addEventListener('change', e => {
-          cpu_count = Number(e.target.value);
-          renderer.scaleRender(e.target.value);
-        }
-        );
+      }
+      $cpuCount.addEventListener('change', e => {
+        cpuCount = Number(e.target.value);
+        WalletGenerator.scaleSearch(e.target.value);
+      });
+      window.OfflineWallet = {
+        generateWallet,
+        stopSearch,
+      }
     </script>
   </body>
 </html>
