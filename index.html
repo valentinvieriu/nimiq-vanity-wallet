@@ -1,0 +1,87 @@
+<html>
+  <head>
+    <title>Nimiq Offline Wallet</title>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <script src="/src/NimiqRenderer.js"></script>
+  </head>
+  <body>
+    <div>
+      <span>
+        <label for="wallet_pattern">Wallet Pattern </label>
+        <input
+          text="text"
+          id="wallet_pattern"
+          name="name"
+          placeholder="^NQ[0-9][0-9]"
+          value="^NQ[0-9][0-9] BE"
+        />
+        <label for="cpu_count">CPU count</label>
+        <input id="cpu_count" type="number" min="1" />
+      </span>
+      <span>
+        <button id="generateWallet" onclick="generateWallet()">
+          Generate Wallet
+        </button>
+        <button id="stop" onclick="stopGenerateWallet()">Stop</button>
+      </span>
+    </div>
+    <div>
+      Counter: <span id="counter">0</span> - Time <span id="timer">0.00</span>
+    </div>
+    <div id="qrcodes"></div>
+
+    <script>
+      const wasm_uri = `/dist/worker-wasm.wasm`;
+      const worker_uri = `/src/NimiqWebWorker.js`;
+
+      const target_dom_element = document.getElementById('qrcodes');
+      const timer_dom_element = document.getElementById('timer');
+      const qrcodes_element = document.getElementById('wallet_pattern');
+      const counter_dom_element = document.getElementById('counter');
+      const cpu_count_dom_element = document.getElementById('cpu_count');
+      cpu_count_dom_element.max = navigator.hardwareConcurrency || 1;
+      cpu_count_dom_element.value = navigator.hardwareConcurrency;
+      let cpu_count = Number(cpu_count_dom_element.value);
+      const renderer = new NimiqRenderer(worker_uri, wasm_uri, cpu_count);
+
+      function stopGenerateWallet() {
+        renderer.stopRender();
+      }
+      function generateWallet() {
+        // target_dom_element.textContent = '';
+        timer_dom_element.textContent = '0:00';
+        counter_dom_element.textContent = '0';
+
+        // prepare data set
+        let wallet_pattern = qrcodes_element.value || '^NQ[0-9][0-9] BE';
+        let counter = 0;
+
+        // run test
+        let svg_end_time;
+        let svg_start_time = Date.now();
+
+        renderer
+          .render(wallet_pattern,cpu_count)
+          .then(({ wallet, mnemonicPrivateKeyLegacy }) => {
+            target_dom_element.insertAdjacentHTML(
+              `beforeend`,
+              ` <pre>${wallet}</pre>
+                <pre>${mnemonicPrivateKeyLegacy}</pre>
+              `
+            );
+            counter += 1;
+            counter_dom_element.innerHTML = counter;
+            total_svg_time = (Date.now() - svg_start_time) / 1000.0;
+            timer_dom_element.innerHTML = `${total_svg_time}`;
+          })
+          .catch(error => alert(error));
+
+        }
+        cpu_count_dom_element.addEventListener('change', e => {
+          cpu_count = Number(e.target.value);
+          renderer.scaleRender(e.target.value);
+        }
+        );
+    </script>
+  </body>
+</html>
