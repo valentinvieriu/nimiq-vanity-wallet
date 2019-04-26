@@ -1,33 +1,69 @@
 <html>
   <head>
-    <title>Nimiq Offline Wallet</title>
+    <title>Nimiq Vanity Wallet Generator</title>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <link rel="stylesheet" href="/dist/nimiq-style.min.css" />
+    <link rel="stylesheet" href="/src/style.css" />
   </head>
-  <body>
-    <div>
+  <body class="nq-card">
+    <header class="nq-blue-bg nq-card-header">
+      <h1 class="nq-h1">Nimiq Vanity Wallet Generator</h1>
+      <br>
       <span>
-        <label for="wallet_pattern">Wallet Pattern </label>
+        <label class="nq-label" for="cpu_count">CPU count</label>
         <input
+          class="nq-input vanishing"
+          id="cpu_count"
+          type="number"
+          min="1"
+        />
+        <br />
+        <label class="nq-label" for="wallet_pattern">Wallet Pattern </label>
+        <input
+          class="nq-input vanishing"
           text="text"
           id="wallet_pattern"
           name="name"
           placeholder="^NQ[0-9][0-9]"
           value="^NQ[0-9][0-9] BEER"
         />
-        <label for="cpu_count">CPU count</label>
-        <input id="cpu_count" type="number" min="1" />
+        <br />
       </span>
       <span>
-        <button id="generateWallet" onclick="OfflineWallet.generateWallet()">
+        <button
+          class="nq-button inverse"
+          id="generateWallet"
+          onclick="OfflineWallet.generateWallet()"
+        >
+          <svg class="nq-icon">
+            <use xlink:href="/dist/nimiq-style.icons.svg#nq-keys" />
+          </svg>
+
           Generate Wallet
         </button>
-        <button id="stop" onclick="OfflineWallet.stopSearch()">Stop</button>
+        <button
+          class="nq-button red"
+          id="stop"
+          onclick="OfflineWallet.stopSearch()"
+        >
+          <svg class="nq-icon">
+            <use xlink:href="/dist/nimiq-style.icons.svg#nq-close" />
+          </svg>
+          Stop
+        </button>
       </span>
+    </header>
+    <div class="nq-card-body">
+      <div id="total_hash_count" class="nq-text-s"></div>
+      <div id="wallets"></div>
     </div>
-    <div id="wallets"></div>
 
     <script type="module">
-      import { default as Iqons, makeHash, IqonsAssets } from "./dist/iqons.bundle.min.js";
+      import {
+        default as Iqons,
+        makeHash,
+        IqonsAssets
+      } from './dist/iqons.bundle.min.js';
       import WalletGenerator from './src/WalletGenerator.js';
       const wasmUrl = `/dist/worker-wasm.wasm`;
       const workerUrl = `/src/WebWorker.js`;
@@ -35,37 +71,90 @@
       const target_dom_element = document.getElementById('wallets');
       const $walletPattern = document.getElementById('wallet_pattern');
       const $cpuCount = document.getElementById('cpu_count');
+      const $totalCountHash = document.getElementById('total_hash_count');
+
       $cpuCount.max = navigator.hardwareConcurrency || 1;
       $cpuCount.value = navigator.hardwareConcurrency;
+      let searchRunning = false;
       let cpuCount = Number($cpuCount.value);
+      let totalCountHash = [];
+
       WalletGenerator.init({ workerUrl, wasmUrl, cpuCount });
       function stopSearch() {
-        WalletGenerator.stopSearch();
+        WalletGenerator.destroyWorkers();
+        totalCountHash = [];
+        searchRunning = false;
+        $cpuCount.value = 0;
       }
       function generateWallet() {
         let searchPattern = $walletPattern.value || '^NQ[0-9][0-9] BE';
-        WalletGenerator
-          .search({searchPattern})
-          .then(async ({ wallet, mnemonicPrivateKeyLegacy }) => {
-            const svgIcon = await Iqons.svg(wallet);
-            target_dom_element.insertAdjacentHTML(
-              `beforeend`,
-              ` <pre>${wallet}</pre>
-                <pre>${mnemonicPrivateKeyLegacy}</pre>
-                ${svgIcon}
-              `
-            );
-          })
-          .catch(error => alert(error));
+        WalletGenerator.search({ searchPattern });
+        searchRunning = true;
       }
+      function changeable(object, onChange) {
+        const handler = {
+          get(target, property, receiver) {
+            try {
+              return new Proxy(target[property], handler);
+            } catch (err) {
+              return Reflect.get(target, property, receiver);
+            }
+          },
+          defineProperty(target, property, descriptor) {
+            onChange();
+            return Reflect.defineProperty(target, property, descriptor);
+          },
+          deleteProperty(target, property) {
+            onChange();
+            return Reflect.deleteProperty(target, property);
+          }
+        };
+
+        return new Proxy(object, handler);
+      }
+
       $cpuCount.addEventListener('change', e => {
         cpuCount = Number(e.target.value);
         WalletGenerator.scaleSearch(e.target.value);
+        totalCountHash = [];
       });
+
+      document.addEventListener(`WalletGenerator-found`, async event => {
+        const { wallet, mnemonicPrivateKeyLegacy } = event.detail;
+        const svgIcon = await Iqons.svg(wallet);
+        target_dom_element.insertAdjacentHTML(
+          `beforeend`,
+          ` <div class="wallet">
+              ${svgIcon}
+              <p class="nq-blue">${wallet}</p>
+              <p class="nq-brown">${mnemonicPrivateKeyLegacy}</p>
+            </div>
+          `
+        );
+      });
+
+      document.addEventListener(`WalletGenerator-countHash`, event => {
+        const { workerId, countHash } = event.detail;
+        // console.log(`Worker: ${workerId}: ${countHash} adresses/s`)
+        totalCountHash[workerId] = Number(countHash);
+      });
+
+      setInterval(() => {
+        let totalAdresses = 0;
+        totalCountHash.map(hash => {
+          totalAdresses = totalAdresses + hash;
+        });
+        if (totalAdresses && totalAdresses > 0) {
+          $totalCountHash.innerHTML = `Adresses: ${totalAdresses} /s`;
+        } else {
+          $totalCountHash.innerHTML = `Not Running`;
+        }
+      }, 1000);
+
       window.OfflineWallet = {
         generateWallet,
-        stopSearch,
-      }
+        stopSearch
+      };
     </script>
   </body>
 </html>

@@ -1,0 +1,25 @@
+body.nq-card {
+  margin: 3rem auto;
+  width: 100%;
+}
+#total_hash_count {
+  text-align: center;
+}
+.wallet {
+  text-align: center;
+  border-top: 1px solid var(--nimiq-gray);
+  margin: 2rem 0;
+  padding: 2rem 0;
+}
+
+.wallet svg {
+  width: 120px;
+  height: 120px;
+}
+
+.wallet textarea {
+  text-align: center;
+  color: var(--nimiq-brown);
+  width: 100%;
+  height: 80px;
+}

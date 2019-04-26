@@ -1,13 +1,12 @@
   let numWorkers = navigator.hardwareConcurrency || 1;
   let workers = [];
   let WORKER_URL, WASM_URL;
-  const generateWorkerEventName = id => `workerId-${id}`;
   const handleMessage = event => {
     const data = event.data;
     switch (data.cmd) {
       case 'found':
         document.dispatchEvent(
-          new CustomEvent(generateWorkerEventName(data.workerId), {
+          new CustomEvent(`WalletGenerator-${data.cmd}`, {
             detail: {
               cmd: data.cmd,
               wallet: data.wallet,
@@ -16,15 +15,37 @@
           })
         );
         break;
+      case 'countHash':
+        document.dispatchEvent(
+          new CustomEvent(`WalletGenerator-${data.cmd}`, {
+            detail: {
+              cmd: data.cmd,
+              workerId: data.workerId,
+              countHash: data.countHash,
+            }
+          })
+        );
+        break;
+      case 'alert':
+        document.dispatchEvent(
+          new CustomEvent(`WalletGenerator-${data.cmd}`, {
+            detail: {
+              cmd: data.cmd,
+              workerId: data.workerId,
+              message: data.message,
+            }
+          })
+        );
+        break;
     }
-    console.log(event);
+    // console.log(event);
   };
   const createWorker = ({ workerId }) => {
     let worker = new Worker(WORKER_URL);
     worker.postMessage({
+      workerId,
       cmd: 'init',
-      wasmUrl: WASM_URL,
-      workerId
+      wasmUrl: WASM_URL
     });
     worker.onmessage = handleMessage;
     return worker;
@@ -39,7 +60,16 @@
     }
   };
   const destroyWorkers = () => {
-    workers.map(worker => worker.terminate());
+    for (let workerId = 0; workerId < numWorkers; workerId++) {
+      let worker = workers[workerId];
+      worker.terminate();
+      workers.push(worker);
+    }
+    workers=[];
+    // workers.map((worker, workerId) => {
+    //   worker.terminate()
+    //   workers.splice(workerId,1);
+    // });
   };
   const stopSearch = () => {
     workers.map(worker => worker.postMessage({cmd: 'stop'}));
@@ -47,28 +77,14 @@
   const search = ({ searchPattern }) => {
     let allWork = [];
     workers.map((worker, workerId) => {
-      allWork.push(
-        new Promise((resolve, reject) => {
-          document.addEventListener(
-            generateWorkerEventName(workerId),
-            event => {
-              resolve({
-                wallet: event.detail.wallet,
-                mnemonicPrivateKeyLegacy: event.detail.mnemonicPrivateKeyLegacy
-              });
-              stopSearch();
-            }
-          );
-
-          worker.postMessage({
-            cmd: 'search',
-            searchPattern
-          });
-        })
-      );
+      worker.postMessage({
+        workerId,
+        cmd: 'search',
+        searchPattern
+      });
     });
-    return Promise.race(allWork);
   };
+
   const scaleSearch = cpuCount => {
     if (cpuCount === workers.length) return;
 
@@ -89,6 +105,7 @@
     init,
     search,
     scaleSearch,
-    stopSearch
+    stopSearch,
+    destroyWorkers
   };
 
