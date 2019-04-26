@@ -16,6 +16,9 @@
           id="cpu_count"
           type="number"
           min="1"
+          step="1"
+          pattern="[1-8]{1}"
+          value="1"
         />
         <br />
         <label class="nq-label" for="wallet_pattern">Wallet Pattern </label>
@@ -64,7 +67,7 @@
         makeHash,
         IqonsAssets
       } from './dist/iqons.bundle.min.js';
-      import WalletGenerator from './src/WalletGenerator.js';
+      import WalletGenerator from '/src/WalletGenerator.js';
       const wasmUrl = `/dist/worker-wasm.wasm`;
       const workerUrl = `/src/WebWorker.js`;
 
@@ -74,7 +77,6 @@
       const $totalCountHash = document.getElementById('total_hash_count');
 
       $cpuCount.max = navigator.hardwareConcurrency || 1;
-      $cpuCount.value = navigator.hardwareConcurrency;
       let searchRunning = false;
       let cpuCount = Number($cpuCount.value);
       let totalCountHash = [];

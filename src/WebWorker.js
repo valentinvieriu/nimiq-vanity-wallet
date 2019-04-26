@@ -1,61 +1,46 @@
-// This is a "Web Worker" which utilizes WASM to generate QRCodes in the browser.
-// https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers
-importScripts('WalletUtils.js');
-// importScripts('MnemonicWords.js');
-class NimiqWebWorker {
-  constructor(wasmUrl) {
-    importScripts('/dist/worker-wasm.js');
+let WebWorker = (() => {
+  importScripts('WalletUtils.js');
+  importScripts('/dist/worker-wasm.js');
 
-    this.instance = fetch(wasmUrl)
-      .then(response => response.arrayBuffer())
-      .then(wasm => Module({ wasmBinary: wasm }));
-  }
+  let WorkerModule, workerId, searchForPattern;
 
-  // Returns a SVG DOMString that can be dropped into the DOM.
-  render() {
-    return this.instance;
-  }
-}
-
-let memoizedWorker;
-let workerId;
-let searchForPattern;
-const generateAdress = WModule =>
-  new Promise(async (resolve, reject) => {
-    try {
-      const privateKey = crypto.getRandomValues(new Uint8Array(32));
-      const publicKey = WalletUtils.generatePublicKey(WModule, privateKey);
-      const address = WalletUtils.generateAddress(WModule, publicKey);
-      const friendlyAddress = WalletUtils.toUserFriendlyAddress(address);
-      const mnemonicPrivateKeyLegacy = await WalletUtils.entropyToMnemonic(
-        privateKey,
-        true
-      ).then(result => result.join(' '));
-      resolve({ friendlyAddress, mnemonicPrivateKeyLegacy });
-    } catch (error) {
-      reject(error);
-    }
-  });
-// This is the main handler. It is called when the worker is sent a message via the
-// `the_worker.postMessage` function.
-onmessage = event => {
-  const data = event.data;
-  switch (data.cmd) {
-    case 'stop':
-      postMessage({
-        cmd: 'alert',
-        message :'Worker stopped'
-      });
-      searchForPattern = false;
-      close(); // Terminates the worker.
-      break;
-    case 'init':
-      memoizedWorker = new NimiqWebWorker(data['wasmUrl']);
-      workerId = data['workerId'];
-      searchForPattern = true;
-      break;
-    case 'search':
-      memoizedWorker.render().then(async WModule => {
+  const generateAdress = WorkerModule =>
+    new Promise(async (resolve, reject) => {
+      try {
+        const privateKey = crypto.getRandomValues(new Uint8Array(32));
+        const publicKey = WalletUtils.generatePublicKey(
+          WorkerModule,
+          privateKey
+        );
+        const address = WalletUtils.generateAddress(WorkerModule, publicKey);
+        const friendlyAddress = WalletUtils.toUserFriendlyAddress(address);
+        const mnemonicPrivateKeyLegacy = await WalletUtils.entropyToMnemonic(
+          privateKey,
+          true
+        ).then(result => result.join(' '));
+        resolve({ friendlyAddress, mnemonicPrivateKeyLegacy });
+      } catch (error) {
+        reject(error);
+      }
+    });
+  // This is the main handler. It is called when the worker is sent a message via the
+  // `the_worker.postMessage` function.
+  onmessage = async event => {
+    const data = event.data;
+    switch (data.cmd) {
+      case 'stop':
+        postMessage({
+          cmd: 'alert',
+          message: 'Worker stopped'
+        });
+        searchForPattern = false;
+        close(); // Terminates the worker.
+        break;
+      case 'init':
+        WorkerModule = Module({ wasmBinary:data['wasmBinary'] });
+        workerId = data['workerId'];
+        break;
+      case 'search':
         searchForPattern = true;
         const pattern = new RegExp(data.searchPattern, 'g');
         let startTime = performance.now();
@@ -64,7 +49,7 @@ onmessage = event => {
           const {
             friendlyAddress,
             mnemonicPrivateKeyLegacy
-          } = await generateAdress(WModule);
+          } = await generateAdress(WorkerModule);
           countHash = countHash + 1;
           let nowTime = performance.now();
           if (nowTime - startTime > 1000) {
@@ -86,9 +71,12 @@ onmessage = event => {
             });
           }
         }
-      });
-      break;
-    default:
-      postMessage('Dude, unknown cmd: ' + data.msg);
-  }
-};
+        break;
+      default:
+        postMessage('Dude, unknown cmd: ' + data.msg);
+    }
+  };
+  return {
+    generateAdress
+  };
+})();
