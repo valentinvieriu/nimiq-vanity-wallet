@@ -1,6 +1,6 @@
   let numWorkers = navigator.hardwareConcurrency || 1;
   let workers = [];
-  let WORKER_URL, WASM_URL;
+  let WORKER_URL, wasmBinary;
   const handleMessage = event => {
     const data = event.data;
     switch (data.cmd) {
@@ -40,22 +40,28 @@
     }
     // console.log(event);
   };
-  const createWorker = ({ workerId }) => {
+  const fetchWasmBinary = async wasmUrl => {
+    const wasmFetch = await fetch(wasmUrl);
+    const wasmBinary = await wasmFetch.arrayBuffer();
+    return wasmBinary;
+  };
+
+  const createWorker = ({ workerId, wasmBinary }) => {
     let worker = new Worker(WORKER_URL);
     worker.postMessage({
       workerId,
       cmd: 'init',
-      wasmUrl: WASM_URL
+      wasmBinary
     });
     worker.onmessage = handleMessage;
     return worker;
   };
-  const init = ({ workerUrl, wasmUrl, cpuCount }) => {
+  const init = async ({ workerUrl, wasmUrl, cpuCount }) => {
     numWorkers = cpuCount ? cpuCount : numWorkers;
     WORKER_URL = workerUrl;
-    WASM_URL = wasmUrl;
+    wasmBinary = await fetchWasmBinary(wasmUrl)
     for (let workerId = 0; workerId < numWorkers; workerId++) {
-      let worker = createWorker({ workerId });
+      let worker = createWorker({ workerId, wasmBinary });
       workers.push(worker);
     }
   };
@@ -90,7 +96,7 @@
 
     if (cpuCount > workers.length) {
       for (let i = workers.length; i < cpuCount; i++) {
-        let worker = createWorker({ workerId:i });
+        let worker = createWorker({ workerId:i, wasmBinary });
         workers[i] = worker;
       }
     } else {
