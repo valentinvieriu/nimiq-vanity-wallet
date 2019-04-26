@@ -1,9 +1,30 @@
-Sample using [wasm-bindgen](https://rustwasm.github.io/wasm-bindgen/) with a single web worker.
+# Nimiq Vanity Wallet Generator
 
-To build the project run:
+I've build this small app to be able to generate a custom Nimiq wallet using my a memoranble adress. This can be easy run offline on your computer.
+
+The code is written in simple Javascript, no build process and no external libraries. We download some external dependencies from the official github repository, but we use no magic npm install.
+
+You can choose how many CPU's to use. The more CPU's you choose, the faster the process of finding the right address is.
+
+For the Wallet pattern you can use plain text or Regexp.
+
+To build the project using Docker:
 
 ```bash
-$ ./build.sh
+docker build -t nimiq-wallet .
+
 ```
 
-Run a local web server and open the browser at http://localhost:8080.
+Run a local web server and open the browser at [http://localhost:8080](http://localhost:8080)
+
+```bash
+docker run --name nimiq-wallet-nginx -d -p 8080:80 nimiq-wallet
+```
+
+To stop the container
+
+``` bash
+docker rm -f nimiq-wallet-nginx
+```
+
+You can run this project without Docker. First run `download.sh` to get all the external libraries and then choose your static server of your choice. You can use the built in static server from python : `python -m SimpleHTTPServer 8080`. You can see the app running at [http://localhost:8080](http://localhost:8080)

@@ -1,5 +1,5 @@
 #!/bin/sh
-
+mkdir -p dist
 # Get the latest wasm files
 curl -L https://raw.githubusercontent.com/nimiq-network/core/master/dist/worker-wasm.js -o ./dist/worker-wasm.js
 curl -L https://raw.githubusercontent.com/nimiq-network/core/master/dist/worker-wasm.wasm -o ./dist/worker-wasm.wasm
