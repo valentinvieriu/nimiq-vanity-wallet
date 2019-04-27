@@ -1,6 +1,6 @@
 let WalletUtils = (() => {
-  self.importScripts('BufferUtils.js');
-  self.importScripts('MnemonicWords.js');
+  importScripts('/src/utils/Buffer.js');
+  importScripts('/src/utils/MnemonicWords.js');
   function ibanCheck(str) {
     const num = str
       .split('')
@@ -70,7 +70,7 @@ let WalletUtils = (() => {
   const BLAKE2B_SIZE = 32;
 
   const generateEntropy = () =>
-    window.crypto.getRandomValues(new Uint8Array(PRIVATE_KEY_SIZE));
+    crypto.getRandomValues(new Uint8Array(PRIVATE_KEY_SIZE));
 
   const generatePublicKey = (WasmModule, privateKey) => {
     // const { publicKey } = nacl.sign.keyPair.fromSeed(privateKey);

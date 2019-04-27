@@ -2,6 +2,7 @@
   <head>
     <title>Nimiq Vanity Wallet Generator</title>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <link rel="stylesheet" href="/dist/nimiq-style.min.css" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
@@ -18,7 +19,6 @@
           min="1"
           step="1"
           pattern="[1-8]{1}"
-          value="1"
         />
         <br />
         <label class="nq-label" for="wallet_pattern">Wallet Pattern </label>
@@ -71,13 +71,13 @@
       const wasmUrl = `/dist/worker-wasm.wasm`;
       const workerUrl = `/src/WebWorker.js`;
 
-      const target_dom_element = document.getElementById('wallets');
+      const $wallets = document.getElementById('wallets');
       const $walletPattern = document.getElementById('wallet_pattern');
       const $cpuCount = document.getElementById('cpu_count');
       const $totalCountHash = document.getElementById('total_hash_count');
 
+      $cpuCount.value = 1;
       $cpuCount.max = navigator.hardwareConcurrency || 1;
-      let searchRunning = false;
       let cpuCount = Number($cpuCount.value);
       let totalCountHash = [];
 
@@ -85,13 +85,11 @@
       function stopSearch() {
         WalletGenerator.destroyWorkers();
         totalCountHash = [];
-        searchRunning = false;
-        $cpuCount.value = 0;
+        $cpuCount.value = 1;
       }
       function generateWallet() {
         let searchPattern = $walletPattern.value || '^NQ[0-9][0-9] BE';
         WalletGenerator.search({ searchPattern });
-        searchRunning = true;
       }
       function changeable(object, onChange) {
         const handler = {
@@ -124,8 +122,8 @@
       document.addEventListener(`WalletGenerator-found`, async event => {
         const { wallet, mnemonicPrivateKeyLegacy } = event.detail;
         const svgIcon = await Iqons.svg(wallet);
-        target_dom_element.insertAdjacentHTML(
-          `beforeend`,
+        $wallets.insertAdjacentHTML(
+          `afterbegin`,
           ` <div class="wallet">
               ${svgIcon}
               <p class="nq-blue">${wallet}</p>

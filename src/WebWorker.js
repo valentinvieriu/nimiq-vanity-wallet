@@ -1,5 +1,5 @@
 let WebWorker = (() => {
-  importScripts('WalletUtils.js');
+  importScripts('/src/utils/Wallet.js');
   importScripts('/dist/worker-wasm.js');
 
   let WorkerModule, workerId, searchForPattern;
@@ -7,7 +7,7 @@ let WebWorker = (() => {
   const generateAdress = WorkerModule =>
     new Promise(async (resolve, reject) => {
       try {
-        const privateKey = crypto.getRandomValues(new Uint8Array(32));
+        const privateKey = WalletUtils.generateEntropy();
         const publicKey = WalletUtils.generatePublicKey(
           WorkerModule,
           privateKey
@@ -28,14 +28,6 @@ let WebWorker = (() => {
   onmessage = async event => {
     const data = event.data;
     switch (data.cmd) {
-      case 'stop':
-        postMessage({
-          cmd: 'alert',
-          message: 'Worker stopped'
-        });
-        searchForPattern = false;
-        close(); // Terminates the worker.
-        break;
       case 'init':
         WorkerModule = Module({ wasmBinary:data['wasmBinary'] });
         workerId = data['workerId'];
@@ -75,8 +67,5 @@ let WebWorker = (() => {
       default:
         postMessage('Dude, unknown cmd: ' + data.msg);
     }
-  };
-  return {
-    generateAdress
   };
 })();
