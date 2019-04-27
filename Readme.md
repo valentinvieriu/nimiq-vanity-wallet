@@ -4,9 +4,9 @@ I've build this small app to be able to generate a custom Nimiq wallet using my 
 
 The code is written in simple Javascript, no build process and no external libraries. We download some external dependencies from the official github repository, but we use no magic npm install.
 
-You can choose how many CPU's to use. The more CPU's you choose, the faster the process of finding the right address is.
+You can choose how many Parallel Workers to use. The more Parallel Workers you choose, the faster the process of finding the right address is.
 
-For the Wallet pattern you can use plain text or Regexp.
+For the Wallet pattern you can use plain text or RegExp.
 
 To build the project using Docker:
 

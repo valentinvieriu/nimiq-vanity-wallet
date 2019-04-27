@@ -23,3 +23,6 @@ body.nq-card {
   width: 100%;
   height: 80px;
 }
+hr {
+  opacity: 0.3;
+}
