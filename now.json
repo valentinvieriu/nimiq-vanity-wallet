@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "alias": "vanity-wallet.vuemiq.com",
+  "alias": ["vanity-wallet.vuemiq.com", "nimiq-vanity-wallet"],
+  "regions": ["cdg"],
   "builds": [
     {
       "src": "./build.sh",
