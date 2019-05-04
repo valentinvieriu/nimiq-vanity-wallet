@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "alias": "vanity-wallet.vuemiq.com",
   "builds": [
     {
       "src": "./build.sh",

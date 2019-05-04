@@ -1,9 +1,7 @@
 FROM nginx
-WORKDIR /usr/share/nginx/html
-COPY ./download.sh /usr/share/nginx/html
+COPY . /app
+WORKDIR /app
 RUN apt-get update && \
   apt-get install curl -y && \
-  ./download.sh && rm ./download.sh && \
+  ./download.sh && cp -r src/* /usr/share/nginx/html   && \
   apt-get remove curl -y && apt autoremove -y
-COPY ./src /usr/share/nginx/html/src
-COPY ./index.html /usr/share/nginx/html
