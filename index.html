@@ -129,10 +129,11 @@
         totalCountHash.map(hash => {
           totalAdresses = totalAdresses + hash;
         });
+        $totalCountHash.textContent = null;
         if (totalAdresses && totalAdresses > 0) {
-          $totalCountHash.innerHTML = `Generating: ${totalAdresses} adresses/second`;
+          $totalCountHash.textContent = `Generating: ${totalAdresses} adresses/second`;
         } else {
-          $totalCountHash.innerHTML = `Not Running`;
+          $totalCountHash.textContent = `Not Running`;
         }
       }, 1000);
 
