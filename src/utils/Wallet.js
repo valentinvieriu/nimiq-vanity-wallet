@@ -1,6 +1,6 @@
 let WalletUtils = (() => {
-  importScripts('/src/utils/Buffer.js');
-  importScripts('/src/utils/MnemonicWords.js');
+  importScripts('/utils/Buffer.js');
+  importScripts('/utils/MnemonicWords.js');
   function ibanCheck(str) {
     const num = str
       .split('')

@@ -6,8 +6,8 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
-    <link rel="stylesheet" href="/dist/nimiq-style.min.css" />
-    <link rel="stylesheet" href="/src/style.css" />
+    <link rel="stylesheet" href="/libs/nimiq-style.min.css" />
+    <link rel="stylesheet" href="/style.css" />
   </head>
   <body class="nq-card">
     <header class="nq-blue-bg nq-card-header">
@@ -46,7 +46,7 @@
           onclick="OfflineWallet.generateWallet()"
         >
           <svg class="nq-icon">
-            <use xlink:href="/dist/nimiq-style.icons.svg#nq-keys" />
+            <use xlink:href="/libs/nimiq-style.icons.svg#nq-keys" />
           </svg>
 
           Generate Wallet
@@ -57,7 +57,7 @@
           onclick="OfflineWallet.stopSearch()"
         >
           <svg class="nq-icon">
-            <use xlink:href="/dist/nimiq-style.icons.svg#nq-close" />
+            <use xlink:href="/libs/nimiq-style.icons.svg#nq-close" />
           </svg>
           Stop
         </button>
@@ -73,10 +73,10 @@
         default as Iqons,
         makeHash,
         IqonsAssets
-      } from './dist/iqons.bundle.min.js';
-      import WalletGenerator from '/src/WalletGenerator.js';
-      const wasmUrl = `/dist/worker-wasm.wasm`;
-      const workerUrl = `/src/WebWorker.js`;
+      } from '/libs/iqons.bundle.min.js';
+      import WalletGenerator from '/WalletGenerator.js';
+      const wasmUrl = `/libs/worker-wasm.wasm`;
+      const workerUrl = `/WebWorker.js`;
 
       const $wallets = document.getElementById('wallets');
       const $walletPattern = document.getElementById('wallet_pattern');

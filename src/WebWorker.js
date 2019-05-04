@@ -1,6 +1,6 @@
 let WebWorker = (() => {
-  importScripts('/src/utils/Wallet.js');
-  importScripts('/dist/worker-wasm.js');
+  importScripts('/utils/Wallet.js');
+  importScripts('/libs/worker-wasm.js');
 
   let WorkerModule, workerId, searchForPattern;
 

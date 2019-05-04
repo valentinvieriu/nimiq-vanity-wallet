@@ -27,4 +27,4 @@ To stop the container
 docker rm -f nimiq-wallet-nginx
 ```
 
-You can run this project without Docker. First run `download.sh` to get all the external libraries and then choose your static server of your choice. You can use the built in static server from python : `python -m SimpleHTTPServer 8080`. You can see the app running at [http://localhost:8080](http://localhost:8080)
+You can run this project without Docker. First run `download.sh` to get all the external libraries and then choose your static server of your choice. You can use the built in static server from python : `cd src && python -m SimpleHTTPServer 8080`. You can see the app running at [http://localhost:8080](http://localhost:8080)
